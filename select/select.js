@@ -1,13 +1,21 @@
-const getTemplate = (placeholder, data = []) => {
-  const inputText = placeholder ?? 'default placeholder'
+const getTemplate = (placeholder, data = [], selectedId) => {
+  let inputText = placeholder ?? 'default placeholder'
 
-  const selectItems = data.map(
-    item => `<li class='select__item' data-type="select-item" data-value="${item.id}">${item.value}</li>`
-  )
+  const selectItems = data.map(item => {
+    let defaultClass = ''
+
+    if (item.id === selectedId) {
+      inputText = item.value
+      defaultClass = 'selected'
+    }
+
+    return `<li class='select__item ${defaultClass}' data-type="select-item" data-id="${item.id}">${item.value}</li>`
+  })
 
   return `
+    <div class="select__backdrop" data-type="backdrop"></div>  
     <div class="select__input" data-type="input-field">
-      <span>${inputText}</span>
+      <span data-type="input-value">${inputText}</span>
       <i class="fa fa-chevron-down" aria-hidden="true" data-type="arrow"></i>
     </div>
     <div class="select__dropdown">
@@ -22,6 +30,7 @@ export class Select {
   constructor(selector, options) {
     this.domElem = document.querySelector(selector)
     this.options = options
+    this.selectedId = options.selectedId
 
     this.#render()
     this.#setup()
@@ -30,11 +39,12 @@ export class Select {
   #render() {
     const { placeholder, data } = this.options
     this.domElem.classList.add('select')
-    this.domElem.innerHTML = getTemplate(placeholder, data)
+    this.domElem.innerHTML = getTemplate(placeholder, data, this.selectedId)
   }
 
   #setup() {
     this.elArrow = this.domElem.querySelector('[data-type="arrow"]')
+    this.elInputValue = this.domElem.querySelector('[data-type="input-value"]')
     this.clickHandler = this.clickHandler.bind(this)
     this.domElem.addEventListener('click', this.clickHandler)
   }
@@ -44,14 +54,32 @@ export class Select {
 
     if (type === 'input-field') {
       this.toggle(type === 'input-field')
-    } else if (type === 'input-field') {
-      const id = e.target.dataset.value
-      console.log(id)
+    } else if (type === 'select-item') {
+      const id = e.target.dataset.id
+      this.select(id)
+    } else if (type === 'backdrop') {
+      this.close()
     }
   }
 
   get isOpen() {
     return this.domElem.classList.contains('open')
+  }
+
+  get current() {
+    return this.options.data.find(item => item.id === this.selectedId)
+  }
+
+  select(id) {
+    this.selectedId = id
+    this.elInputValue.textContent = this.current.value
+
+    this.domElem.querySelectorAll('[data-type="select-item"]').forEach(elem => elem.classList.remove('selected'))
+    this.domElem.querySelector(`[data-id="${id}"]`).classList.add('selected')
+
+    this.options.onSelect ? this.options.onSelect(this.current) : null
+
+    this.close()
   }
 
   toggle() {
@@ -72,5 +100,6 @@ export class Select {
 
   destroy() {
     this.domElem.removeEventListener('click', this.clickHandler)
+    this.domElem.innerHTML = ''
   }
 }
