@@ -19,6 +19,7 @@ body {
 .select {
   width: 100%;
   position: relative;
+  z-index: 100;
 
   &.open {
     .select__dropdown {
@@ -27,6 +28,10 @@ body {
 
     .select__input {
       border-bottom: none;
+    }
+
+    .select__backdrop {
+      display: block;
     }
   }
 
@@ -61,9 +66,24 @@ body {
     list-style: none;
   }
 
+  &__backdrop {
+    position: fixed;
+    display: none;
+    right: 0;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    background: transparent;
+    z-index: -1;
+  }
+
   &__item {
     padding: 0.4rem 1rem;
     border: 1px solid #ccc;
+
+    &.selected {
+      background-color: lightgreen;
+    }
 
     &:hover {
       background-color: #eee;
